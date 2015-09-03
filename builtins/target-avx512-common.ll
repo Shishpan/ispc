@@ -1040,10 +1040,10 @@ define <16 x i64>
 @__gather_base_offsets64_i64(i8 * %ptr, i32 %offset_scale,
                             <16 x i64> %offsets,
                             <16 x i1> %vecmask) nounwind readonly alwaysinline {
-  %scalarMask = bitcast <16 x i1> %vecmask to i16
-  %scalarMask1 = trunc i16 %scalarMask to i8
-  %scalarMask2Tmp = lshr i16 %scalarMask, 8
-  %scalarMask2 = trunc i16  %scalarMask2Tmp to i8
+  %vecmask1 = shufflevector <16 x i1> %vecmask, <16 x i1> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %vecmask2 = shufflevector <16 x i1> %vecmask, <16 x i1> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  %scalarMask1 = bitcast <8 x i1> %vecmask1 to i8
+  %scalarMask2 = bitcast <8 x i1> %vecmask2 to i8
   %offsets_lo = shufflevector <16 x i64> %offsets, <16 x i64> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
   %offsets_hi = shufflevector <16 x i64> %offsets, <16 x i64> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
   %res1 = call <8 x i64> @llvm.x86.avx512.gather.qpq.512 (<8 x i64> undef, i8* %ptr, <8 x i64> %offsets_lo, i8 %scalarMask1, i32 %offset_scale)
@@ -1250,7 +1250,70 @@ define i32 @__packed_store_active2(i32 * %startptr, <16 x i32> %vals,
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; prefetch
 
-define_prefetches()
+declare void @llvm.prefetch(i8* nocapture , i32, i32, i32) ; cachetype == 1 is dcache
+
+define void @__prefetch_read_uniform_1(i8 *) alwaysinline {
+  call void @llvm.prefetch(i8 * %0, i32 0, i32 3, i32 1)
+  ret void
+}
+
+define void @__prefetch_read_uniform_2(i8 *) alwaysinline {
+  call void @llvm.prefetch(i8 * %0, i32 0, i32 2, i32 1)
+  ret void
+}
+
+define void @__prefetch_read_uniform_3(i8 *) alwaysinline {
+  call void @llvm.prefetch(i8 * %0, i32 0, i32 1, i32 1)
+  ret void
+}
+
+define void @__prefetch_read_uniform_nt(i8 *) alwaysinline {
+  call void @llvm.prefetch(i8 * %0, i32 0, i32 0, i32 1)
+  ret void
+}
+declare  void @llvm.x86.avx512.gatherpf.qps.512(i8, <8 x i64>, i8* , i32, i32)
+define void @__prefetch_read_varying_1(<16 x i64> %addr, <16 x i1> %mask) alwaysinline {
+  %addr1 = shufflevector <16 x i64> %addr, <16 x i64> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+  %addr2 = shufflevector <16 x i64> %addr, <16 x i64> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+  call void  @llvm.x86.avx512.gatherpf.qps.512(i8 -1, <8 x i64> %addr1, i8* undef, i32 1, i32 0)
+  call void  @llvm.x86.avx512.gatherpf.qps.512(i8 -1, <8 x i64> %addr2, i8* undef, i32 1, i32 0)
+  ret void
+}
+
+declare void @__prefetch_read_varying_1_native(i8 * %base, i32 %scale, <WIDTH x i32> %offsets, <WIDTH x MASK> %mask) nounwind
+
+define void @__prefetch_read_varying_2(<WIDTH x i64> %addr, <WIDTH x MASK> %mask) alwaysinline {
+  per_lane(WIDTH, <WIDTH x MASK> %mask, `
+  %iptr_LANE_ID = extractelement <WIDTH x i64> %addr, i32 LANE
+  %ptr_LANE_ID = inttoptr i64 %iptr_LANE_ID to i8*
+  call void @llvm.prefetch(i8 * %ptr_LANE_ID, i32 0, i32 2, i32 1)
+  ')
+  ret void
+}
+
+declare void @__prefetch_read_varying_2_native(i8 * %base, i32 %scale, <WIDTH x i32> %offsets, <WIDTH x MASK> %mask) nounwind
+
+define void @__prefetch_read_varying_3(<WIDTH x i64> %addr, <WIDTH x MASK> %mask) alwaysinline {
+  per_lane(WIDTH, <WIDTH x MASK> %mask, `
+  %iptr_LANE_ID = extractelement <WIDTH x i64> %addr, i32 LANE
+  %ptr_LANE_ID = inttoptr i64 %iptr_LANE_ID to i8*
+  call void @llvm.prefetch(i8 * %ptr_LANE_ID, i32 0, i32 1, i32 1)
+  ')
+  ret void
+}
+
+declare void @__prefetch_read_varying_3_native(i8 * %base, i32 %scale, <WIDTH x i32> %offsets, <WIDTH x MASK> %mask) nounwind
+
+define void @__prefetch_read_varying_nt(<WIDTH x i64> %addr, <WIDTH x MASK> %mask) alwaysinline {
+  per_lane(WIDTH, <WIDTH x MASK> %mask, `
+  %iptr_LANE_ID = extractelement <WIDTH x i64> %addr, i32 LANE
+  %ptr_LANE_ID = inttoptr i64 %iptr_LANE_ID to i8*
+  call void @llvm.prefetch(i8 * %ptr_LANE_ID, i32 0, i32 0, i32 1)
+  ')
+  ret void
+}
+
+declare void @__prefetch_read_varying_nt_native(i8 * %base, i32 %scale, <WIDTH x i32> %offsets, <WIDTH x MASK> %mask) nounwind
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; int8/int16 builtins
