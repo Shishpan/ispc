@@ -1281,20 +1281,144 @@ define double @__pow_uniform_double(double %a, double %b) nounwind readnone alwa
   ret double %res;
 }
 
-declare <16 x float> @__pow_varying_float(<16 x float> %a, <16 x float> %b) nounwind readnone alwaysinline
+define <16 x float> @__pow_varying_float(<16 x float> %x_full, <16 x float> %b) nounwind readnone {
+    %exp = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %x_full, <16 x float> zeroinitializer, i16 -1, i32 4)
+    %mant = call <16 x float> @llvm.x86.avx512.mask.getmant.ps.512(<16 x float> %x_full, i32 11, <16 x float> %x_full, i16 -1, i32 4)
+    %exp_of_mant = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %mant, <16 x float> zeroinitializer, i16 -1, i32 4)
+    %exp_final = fsub <16 x float> %exp, %exp_of_mant
+    %arg = fsub <16 x float> %mant, <float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0>
+    %mant_i32 = bitcast <16 x float> %mant to <16 x i32>
+    %mant_16xi32 = lshr <16 x i32> %mant_i32, <i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19>    
+    %c1_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0xBFCD063DE0000000, float 0xBFC80811C0000000, float 0xBFC419C4A0000000, float 0xBFC0F768A0000000, float 0xBFBCE0AE20000000, float 0xBFB8C23E20000000, float 0xBFB55F10C0000000, float 0xBFB28FCF00000000, float 0xBFE2BDD1A0000000, float 0xBFE0817AE0000000, float 0xBFDD362E40000000, float 0xBFD9F67EE0000000, float 0xBFD72B7560000000, float 0xBFD4C18260000000, float 0xBFD2A8DF60000000, float 0xBFD0D4BC00000000>, <16 x float> <float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000> , i16 -1)
+    %c2_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0x3FD546D760000000, float 0x3FD4D16720000000, float 0x3FD4168060000000, float 0x3FD3362F20000000, float 0x3FD24490E0000000, float 0x3FD14E3C00000000, float 0x3FD05AF8C0000000, float 0x3FCEDEEEC0000000, float 0x3FC8D09FC0000000, float 0x3FCEB1E7A0000000, float 0x3FD17D52A0000000, float 0x3FD3042620000000, float 0x3FD4111880000000, float 0x3FD4BF91A0000000, float 0x3FD524C160000000, float 0x3FD5511F40000000>, <16 x float> <float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000> , i16 -1)
+    %c3_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0xBFDFFFD260000000, float 0xBFDFF85160000000, float 0xBFDFE0EE60000000, float 0xBFDFB6ED60000000, float 0xBFDF7A9F60000000, float 0xBFDF2DC400000000, float 0xBFDED2AC20000000, float 0xBFDE6BC520000000, float 0xBFE0C1E500000000, float 0xBFE06F58C0000000, float 0xBFE03BC440000000, float 0xBFE01D1B40000000, float 0xBFE00C3400000000, float 0xBFE003F480000000, float 0xBFE000BE20000000, float 0xBFE0000360000000>, <16 x float> <float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000> , i16 -1)
+    %c4_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0x3FF0000000000000, float 0x3FEFFFEAA0000000, float 0x3FEFFF6C80000000, float 0x3FEFFE1B60000000, float 0x3FEFFB9780000000, float 0x3FEFF796A0000000, float 0x3FEFF1E580000000, float 0x3FEFEA6580000000, float 0x3FEFF41120000000, float 0x3FEFFA1B80000000, float 0x3FEFFD5880000000, float 0x3FEFFEF3A0000000, float 0x3FEFFFA980000000, float 0x3FEFFFEC40000000, float 0x3FEFFFFDE0000000, float 0x3FF0000000000000>, <16 x float> <float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000> , i16 -1) 
+    %x_0 = fmul <16 x float> %exp_final, <float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000> 
+    %iter1 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %c1_final, <16 x float> %c2_final, i16 -1, i32 4) nounwind
+    %iter2 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter1, <16 x float> %c3_final, i16 -1, i32 4) nounwind
+    %iter3 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter2, <16 x float> %c4_final, i16 -1, i32 4) nounwind
+    %res = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter3, <16 x float> %x_0, i16 -1, i32 4) nounwind
 
-;;define <16 x float> @__pow_varying_float(<16 x float> %a, <16 x float> %b) nounwind readnone alwaysinline
-;;  ret <16 x float> %a
-;;}
+    %a = fmul <16 x float> %res, %b
+    %a0 = call <16 x float> @llvm.x86.avx512.mask.mul.ps.512(<16 x float> <float F144, float F144, float F144, float F144,
+        float F144, float F144, float F144, float F144, float F144, float F144, float F144, float F144,
+        float F144, float F144, float F144, float F144>, <16 x float> %a, <16 x float> zeroinitializer, i16 -1, i32 0)
+    %res_final = call <16 x float> @llvm.x86.avx512.exp2.ps(<16 x float> %a0, <16 x float> zeroinitializer, i16 -1, i32 8)
+    ret <16 x float> %res_final
+}
 
-declare <16 x double> @__pow_varying_double(<16 x double> %a, <16 x double> %b) nounwind readnone alwaysinline
+define <16 x double> @__pow_varying_double(<16 x double> %x_full, <16 x double> %b) nounwind readnone alwaysinline {
+    %x1 = shufflevector <16 x double> %x_full, <16 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %x2 = shufflevector <16 x double> %x_full, <16 x double> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    forloop(J, 1, 2, `
+    %mant_`'J = call <8 x double> @llvm.x86.avx512.mask.getmant.pd.512(<8 x double> %x`'J`', i32 8, <8 x double> %x`'J, i8 -1, i32 8)
+    %exp_`'J = call <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double> %x`'J`',  <8 x double> zeroinitializer, i8 -1, i32 4)
+    %rcp_mant_`'J = call <8 x double> @llvm.x86.avx512.rcp14.pd.512(<8 x double> %mant_`'J`', <8 x double> zeroinitializer, i8 -1)
+    %after_scale_`'J = call <8 x double> @llvm.x86.avx512.mask.rndscale.pd.512(<8 x double> %rcp_mant_`'J`', i32 88, <8 x double> %rcp_mant_`'J`', i8 -1, i32 4)
+    %after_sub_`'J =  call <8 x double> @llvm.x86.avx512.mask3.vfmsub.pd.512(<8 x double> %after_scale_`'J`', <8 x double> %mant_`'J`', <8 x double> <double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000>, i8 -1, i32 4)
+    %after_scale_i64_`'J = bitcast <8 x double> %after_scale_`'J to <8 x i64>
+    %after_shift_`'J = call <8 x i64> @llvm.x86.avx512.mask.psrli.q(<8 x i64> %after_scale_i64_`'J, i32 48, <8 x i64> %after_scale_i64_`'J, i8 -1)
+    %comp_`'J = fcmp olt <8 x double> %after_scale_`'J, <double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000>
+    %after_perm_`'J = call <8 x double> @llvm.x86.avx512.mask.vpermt2var.pd.512(<8 x i64> %after_shift_`'J`', <8 x double> <double 0x0000000000000000, double 0xbfaf0a30c01162a6, double 0xbfbe27076e2af2e6, double 0xbfc5ff3070a793d4, double 0xbfcc8ff7c79a9a22, double 0xbfd1675cababa60e, double 0xbfd4618bc21c5ec2, double 0xbfd739d7f6bbd007>, <8 x double> <double 0x3fd269621134db92, double 0x3fcf991c6cb3b379, double 0x3fca93ed3c8ad9e3, double 0x3fc5bf406b543db2, double 0x3fc1178e8227e47c, double 0x3fb9335e5d594989, double 0x3fb08598b59e3a07, double 0x3fa0415d89e74444> , i8 -1)
+    %vadd_`'J = fadd <8 x double> %exp_`'J`', <double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000>
+    %vadd_masked_`'J = select <8 x i1> %comp_`'J`', <8 x double> %vadd_`'J`', <8 x double> %exp_`'J`'
+    %vmul_`'J = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> %after_sub_`'J`', <8 x double> %after_sub_`'J`', <8 x double> zeroinitializer, i8 -1, i32 0)
+    %iter1_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70>, <8 x double> <double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62>, i8 -1, i32 4)
+    %iter2_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef>, <8 x double> <double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06>, i8 -1, i32 4)
+    %iter3_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c>, <8 x double> <double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd>, i8 -1, i32 4) 
+    %iter4_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466>, <8 x double> <double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6>, i8 -1, i32 4)
+    %iter5_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter1_`'J`', <8 x double> %iter2_`'J`', i8 -1, i32 4)
+    %vmul_last_`'J = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> %vmul_`'J`', <8 x double> %vmul_`'J`', <8 x double> zeroinitializer, i8 -1, i32 0)
+    %iter6_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter3_`'J`', <8 x double> %iter4_`'J`', i8 -1, i32 4)
+    %iter7_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_last_`'J`', <8 x double> %iter5_`'J`', <8 x double> %iter6_`'J`', i8 -1, i32 4)    
+    %iter8_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter7_`'J`', <8 x double> %after_sub_`'J`', i8 -1, i32 4)
+    %vadd_last_`'J = fadd <8 x double> %iter8_`'J`', %after_perm_`'J
+    %res_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vadd_masked_`'J`', <8 x double> <double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef>, <8 x double> %vadd_last_`'J`', i8 -1, i32 4)
+')
+    %res = shufflevector <8 x double> %res_1, <8 x double> %res_2, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+
+    %a = fmul <16 x double> %res, %b
+    %alo = shufflevector <16 x double> %a, <16 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %ahi = shufflevector <16 x double> %a, <16 x double> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15> 
+    %alo0 = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> <double D144, double D144, double D144, 
+        double D144, double D144, double D144, double D144, double D144>, <8 x double> %alo, <8 x double> zeroinitializer, i8 -1, i32 0)
+    %ahi0 = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> <double D144, double D144, double D144, 
+        double D144, double D144, double D144, double D144, double D144>, <8 x double> %ahi, <8 x double> zeroinitializer, i8 -1, i32 0)
+    %res_lo = call <8 x double> @llvm.x86.avx512.exp2.pd(<8 x double> %alo0, <8 x double> zeroinitializer, i8 -1, i32 8)
+    %res_hi = call <8 x double> @llvm.x86.avx512.exp2.pd(<8 x double> %ahi0, <8 x double> zeroinitializer, i8 -1, i32 8)
+    %res_final = shufflevector <8 x double> %res_lo, <8 x double> %res_hi, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15> 
+    ret <16 x double> %res_final
+}
 
 
 ;; log
 declare float @__log_uniform_float(float %a) nounwind readnone alwaysinline
 declare double @__log_uniform_double(double %a) nounwind readnone alwaysinline
-declare <16 x float> @__log_varying_float(<16 x float> %a) nounwind readnone alwaysinline
-declare <16 x double> @__log_varying_double(<16 x double> %a) nounwind readnone alwaysinline
+
+declare <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double>, <8 x double>, i8, i32) nounwind readnone
+declare <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float>, <16 x float>, i16, i32) nounwind readnone
+declare <8 x double> @llvm.x86.avx512.mask.getmant.pd.512(<8 x double>, i32, <8 x double>, i8, i32)
+declare <16 x float> @llvm.x86.avx512.mask.getmant.ps.512(<16 x float>, i32, <16 x float>, i16, i32)
+declare <8 x i64> @llvm.x86.avx512.mask.psrli.q(<8 x i64>, i32, <8 x i64>, i8) nounwind readnone
+declare <8 x double> @llvm.x86.avx512.mask.rndscale.pd.512(<8 x double>, i32, <8 x double>, i8, i32)
+declare <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
+declare <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float>, <16 x float>, <16 x float>, i16, i32)
+declare <8 x double> @llvm.x86.avx512.mask3.vfmsub.pd.512(<8 x double>, <8 x double>, <8 x double>, i8, i32)
+declare <8 x double> @llvm.x86.avx512.mask.vpermt2var.pd.512(<8 x i64>, <8 x double>, <8 x double>, i8)
+declare <8 x double> @llvm.x86.avx512.rcp14.pd.512(<8 x double>, <8 x double>, i8) nounwind readnone
+declare <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32>, <16 x float>, <16 x float>, i16)
+
+define <16 x float> @__log_varying_float(<16 x float> %x_full) nounwind readnone {
+    %exp = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %x_full, <16 x float> zeroinitializer, i16 -1, i32 4)
+    %mant = call <16 x float> @llvm.x86.avx512.mask.getmant.ps.512(<16 x float> %x_full, i32 11, <16 x float> %x_full, i16 -1, i32 4)
+    %exp_of_mant = call <16 x float> @llvm.x86.avx512.mask.getexp.ps.512(<16 x float> %mant, <16 x float> zeroinitializer, i16 -1, i32 4)
+    %exp_final = fsub <16 x float> %exp, %exp_of_mant
+    %arg = fsub <16 x float> %mant, <float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0, float 1.0>
+    %mant_i32 = bitcast <16 x float> %mant to <16 x i32>
+    %mant_16xi32 = lshr <16 x i32> %mant_i32, <i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19, i32 19>    
+    %c1_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0xBFCD063DE0000000, float 0xBFC80811C0000000, float 0xBFC419C4A0000000, float 0xBFC0F768A0000000, float 0xBFBCE0AE20000000, float 0xBFB8C23E20000000, float 0xBFB55F10C0000000, float 0xBFB28FCF00000000, float 0xBFE2BDD1A0000000, float 0xBFE0817AE0000000, float 0xBFDD362E40000000, float 0xBFD9F67EE0000000, float 0xBFD72B7560000000, float 0xBFD4C18260000000, float 0xBFD2A8DF60000000, float 0xBFD0D4BC00000000>, <16 x float> <float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000, float 0xBFCD063DE0000000> , i16 -1)
+    %c2_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0x3FD546D760000000, float 0x3FD4D16720000000, float 0x3FD4168060000000, float 0x3FD3362F20000000, float 0x3FD24490E0000000, float 0x3FD14E3C00000000, float 0x3FD05AF8C0000000, float 0x3FCEDEEEC0000000, float 0x3FC8D09FC0000000, float 0x3FCEB1E7A0000000, float 0x3FD17D52A0000000, float 0x3FD3042620000000, float 0x3FD4111880000000, float 0x3FD4BF91A0000000, float 0x3FD524C160000000, float 0x3FD5511F40000000>, <16 x float> <float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000, float 0x3FD546D760000000> , i16 -1)
+    %c3_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0xBFDFFFD260000000, float 0xBFDFF85160000000, float 0xBFDFE0EE60000000, float 0xBFDFB6ED60000000, float 0xBFDF7A9F60000000, float 0xBFDF2DC400000000, float 0xBFDED2AC20000000, float 0xBFDE6BC520000000, float 0xBFE0C1E500000000, float 0xBFE06F58C0000000, float 0xBFE03BC440000000, float 0xBFE01D1B40000000, float 0xBFE00C3400000000, float 0xBFE003F480000000, float 0xBFE000BE20000000, float 0xBFE0000360000000>, <16 x float> <float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000, float 0xBFDFFFD260000000> , i16 -1)
+    %c4_final = call <16 x float> @llvm.x86.avx512.mask.vpermt2var.ps.512(<16 x i32> %mant_16xi32, <16 x float> <float 0x3FF0000000000000, float 0x3FEFFFEAA0000000, float 0x3FEFFF6C80000000, float 0x3FEFFE1B60000000, float 0x3FEFFB9780000000, float 0x3FEFF796A0000000, float 0x3FEFF1E580000000, float 0x3FEFEA6580000000, float 0x3FEFF41120000000, float 0x3FEFFA1B80000000, float 0x3FEFFD5880000000, float 0x3FEFFEF3A0000000, float 0x3FEFFFA980000000, float 0x3FEFFFEC40000000, float 0x3FEFFFFDE0000000, float 0x3FF0000000000000>, <16 x float> <float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000, float 0x3FF0000000000000> , i16 -1) 
+    %x_0 = fmul <16 x float> %exp_final, <float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000, float 0x3FE62E4300000000> 
+    %iter1 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %c1_final, <16 x float> %c2_final, i16 -1, i32 4) nounwind
+    %iter2 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter1, <16 x float> %c3_final, i16 -1, i32 4) nounwind
+    %iter3 = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter2, <16 x float> %c4_final, i16 -1, i32 4) nounwind
+    %res = call <16 x float> @llvm.x86.avx512.mask.vfmadd.ps.512(<16 x float> %arg, <16 x float> %iter3, <16 x float> %x_0, i16 -1, i32 4) nounwind
+    ret <16 x float> %res
+    }
+define <16 x double> @__log_varying_double(<16 x double> %x_full) nounwind readnone {
+    %x1 = shufflevector <16 x double> %x_full, <16 x double> undef, <8 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7>
+    %x2 = shufflevector <16 x double> %x_full, <16 x double> undef, <8 x i32> <i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+
+    forloop(J, 1, 2, `
+    %mant_`'J = call <8 x double> @llvm.x86.avx512.mask.getmant.pd.512(<8 x double> %x`'J`', i32 8, <8 x double> %x`'J, i8 -1, i32 8)
+    %exp_`'J = call <8 x double> @llvm.x86.avx512.mask.getexp.pd.512(<8 x double> %x`'J`',  <8 x double> zeroinitializer, i8 -1, i32 4)
+    %rcp_mant_`'J = call <8 x double> @llvm.x86.avx512.rcp14.pd.512(<8 x double> %mant_`'J`', <8 x double> zeroinitializer, i8 -1)
+    %after_scale_`'J = call <8 x double> @llvm.x86.avx512.mask.rndscale.pd.512(<8 x double> %rcp_mant_`'J`', i32 88, <8 x double> %rcp_mant_`'J`', i8 -1, i32 4)
+    %after_sub_`'J =  call <8 x double> @llvm.x86.avx512.mask3.vfmsub.pd.512(<8 x double> %after_scale_`'J`', <8 x double> %mant_`'J`', <8 x double> <double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000>, i8 -1, i32 4)
+    %after_scale_i64_`'J = bitcast <8 x double> %after_scale_`'J to <8 x i64>
+    %after_shift_`'J = call <8 x i64> @llvm.x86.avx512.mask.psrli.q(<8 x i64> %after_scale_i64_`'J, i32 48, <8 x i64> %after_scale_i64_`'J, i8 -1)
+    %comp_`'J = fcmp olt <8 x double> %after_scale_`'J, <double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000, double 0x3fe8000000000000>
+    %after_perm_`'J = call <8 x double> @llvm.x86.avx512.mask.vpermt2var.pd.512(<8 x i64> %after_shift_`'J`', <8 x double> <double 0x0000000000000000, double 0xbfaf0a30c01162a6, double 0xbfbe27076e2af2e6, double 0xbfc5ff3070a793d4, double 0xbfcc8ff7c79a9a22, double 0xbfd1675cababa60e, double 0xbfd4618bc21c5ec2, double 0xbfd739d7f6bbd007>, <8 x double> <double 0x3fd269621134db92, double 0x3fcf991c6cb3b379, double 0x3fca93ed3c8ad9e3, double 0x3fc5bf406b543db2, double 0x3fc1178e8227e47c, double 0x3fb9335e5d594989, double 0x3fb08598b59e3a07, double 0x3fa0415d89e74444> , i8 -1)
+    %vadd_`'J = fadd <8 x double> %exp_`'J`', <double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000, double 0x3ff0000000000000>
+    %vadd_masked_`'J = select <8 x i1> %comp_`'J`', <8 x double> %vadd_`'J`', <8 x double> %exp_`'J`'
+    %vmul_`'J = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> %after_sub_`'J`', <8 x double> %after_sub_`'J`', <8 x double> zeroinitializer, i8 -1, i32 0)
+    %iter1_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70, double 0x3fbc81cd309d7c70>, <8 x double> <double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62, double 0xbfc007357e93af62>, i8 -1, i32 4)
+    %iter2_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef, double 0x3fc249229cee81ef>, <8 x double> <double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06, double 0xbfc55553fb28db06>, i8 -1, i32 4)
+    %iter3_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c, double 0x3fc9999999cc9f5c>, <8 x double> <double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd, double 0xbfd00000000c05bd>, i8 -1, i32 4) 
+    %iter4_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %after_sub_`'J`', <8 x double> <double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466, double 0x3fd5555555555466>, <8 x double> <double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6, double 0xbfdfffffffffffc6>, i8 -1, i32 4)
+    %iter5_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter1_`'J`', <8 x double> %iter2_`'J`', i8 -1, i32 4)
+    %vmul_last_`'J = call <8 x double> @llvm.x86.avx512.mask.mul.pd.512(<8 x double> %vmul_`'J`', <8 x double> %vmul_`'J`', <8 x double> zeroinitializer, i8 -1, i32 0)
+    %iter6_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter3_`'J`', <8 x double> %iter4_`'J`', i8 -1, i32 4)
+    %iter7_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_last_`'J`', <8 x double> %iter5_`'J`', <8 x double> %iter6_`'J`', i8 -1, i32 4)    
+    %iter8_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vmul_`'J`', <8 x double> %iter7_`'J`', <8 x double> %after_sub_`'J`', i8 -1, i32 4)
+    %vadd_last_`'J = fadd <8 x double> %iter8_`'J`', %after_perm_`'J
+    %res_`'J = call <8 x double> @llvm.x86.avx512.mask.vfmadd.pd.512(<8 x double> %vadd_masked_`'J`', <8 x double> <double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef, double 0x3fe62e42fefa39ef>, <8 x double> %vadd_last_`'J`', i8 -1, i32 4)
+')
+    %res = shufflevector <8 x double> %res_1, <8 x double> %res_2, <16 x i32> <i32 0, i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15>
+    ret <16 x double> %res
+}
 
 ;; Trigonometry
 trigonometry_decl()
